@@ -14,7 +14,6 @@ def create_post(request):
         title = data.get('title')
         content = data.get('content')
 
-        # No validation, serializer not used
         post = Post.objects.create(title=title, content=content)
 
         return JsonResponse({
