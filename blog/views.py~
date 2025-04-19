@@ -1,24 +1,66 @@
 # blog/views.py
-from django.views.decorators.csrf import csrf_exempt
+
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Post
 import json
-@csrf_exempt
+
+@csrf_exempt  # (If you haven't added authentication yet)
 def create_post(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
 
-        title = data.get('title')
-        content = data.get('content')
+            title = data.get('title')
+            content = data.get('content')
 
-        # No validation, serializer not used
-        post = Post.objects.create(title=title, content=content)
+            # Input Validation
+            if not title or not content:
+                return JsonResponse(
+                    {'error': 'Both title and content are required.'},
+                    status=400
+                )
 
-        return JsonResponse({
-            'message': 'Post created successfully',
-            'post': {
-                'id': post.id,
-                'title': post.title,
-                'content': post.content
-            }
-        }, status=201)
+            post = Post.objects.create(title=title, content=content)
+
+            return JsonResponse({
+                'message': 'Post created successfully',
+                'post': {
+                    'id': post.id,
+                    'title': post.title,
+                    'content': post.content,
+                    'created_at': post.created_at
+                }
+            }, status=201)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+        except Exception as e:
+            return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@csrf_exempt
+def delete_post(request, post_id):
+    if request.method == 'DELETE':
+        try:
+            # Optional: handle JSON body even if we don’t need it yet
+            try:
+                data = json.loads(request.body) if request.body else {}
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+            try:
+                post = Post.objects.get(id=post_id)
+            except Post.DoesNotExist:
+                return JsonResponse({'error': 'Post not found'}, status=404)
+
+            post.delete()
+            return JsonResponse({'message': 'Post deleted successfully'}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

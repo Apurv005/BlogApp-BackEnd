@@ -40,3 +40,27 @@ def create_post(request):
             return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@csrf_exempt
+def delete_post(request, post_id):
+    if request.method == 'DELETE':
+        try:
+            post = Post.objects.get(id=post_id)
+            deleted_data = {
+                'id': post.id,
+                'title': post.title,
+                'content': post.content,
+                'created_at': post.created_at,
+            }
+            post.delete()
+            return JsonResponse({
+                'message': 'Post deleted successfully',
+                'deleted_post': deleted_data
+            }, status=200)
+        except Post.DoesNotExist:
+            return JsonResponse({'error': 'Post with the given ID does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
