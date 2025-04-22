@@ -2,6 +2,8 @@
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+
 from .models import Post
 import json
 
@@ -42,6 +44,9 @@ def create_post(request):
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 
+
+
+
 @csrf_exempt
 def delete_post(request, post_id):
     if request.method == 'DELETE':
@@ -62,5 +67,40 @@ def delete_post(request, post_id):
             return JsonResponse({'error': 'Post with the given ID does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def update_post(request, pk):
+    if request.method == 'PUT':
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            return JsonResponse({'error': 'Post not found.'}, status=404)
+
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        title = data.get('title')
+        content = data.get('content')
+
+        if not title or not content:
+            return JsonResponse({'error': 'Both title and content are required.'}, status=400)
+
+        post.title = title
+        post.content = content
+        post.save()
+
+        return JsonResponse({
+            'message': 'Post updated successfully',
+            'post': {
+                'id': post.id,
+                'title': post.title,
+                'content': post.content,
+                'created_at': post.created_at
+            }
+        }, status=200)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
