@@ -64,3 +64,21 @@ def delete_post(request, post_id):
             return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def get_all_posts(request):
+    if request.method == 'GET':
+        posts = Post.objects.all()
+        post_list = []
+
+        for post in posts:
+            post_list.append({
+                'id': post.id,
+                'title': post.title,
+                'content': post.content,
+                'created_at': post.created_at
+            })
+
+        return JsonResponse({'posts': post_list}, status=200)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
