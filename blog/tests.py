@@ -60,3 +60,31 @@ class DeletePostTestCase(TestCase):
         response = self.client.get(f'/api/posts/delete/{self.post.id}/')
         self.assertEqual(response.status_code, 405)
         self.assertIn('error', response.json())
+
+class GetAllPostsTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('get-all-posts')
+        # Create sample posts
+        Post.objects.create(title='Post 1', content='Content 1')
+        Post.objects.create(title='Post 2', content='Content 2')
+
+    def test_get_all_posts_success(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('posts', data)
+        self.assertEqual(len(data['posts']), 2)
+
+        # Check the structure of the first post
+        first_post = data['posts'][0]
+        self.assertIn('id', first_post)
+        self.assertIn('title', first_post)
+        self.assertIn('content', first_post)
+        self.assertIn('created_at', first_post)
+
+    def test_get_all_posts_wrong_method(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 405)
+        data = response.json()
+        self.assertIn('error', data)
