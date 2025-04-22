@@ -55,11 +55,11 @@ def delete_post(request, post_id):
             }
             post.delete()
             return JsonResponse({
-                'message': 'Post deleted successfully!',
+                'message': 'Post deleted successfully',
                 'deleted_post': deleted_data
             }, status=200)
         except Post.DoesNotExist:
-            return JsonResponse({'error': 'Post with the provided ID does not exist'}, status=404)
+            return JsonResponse({'error': 'Post with the given ID does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
     else:
